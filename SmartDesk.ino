@@ -33,7 +33,7 @@ void setup() {
     Serial.begin(9600);
     ble.begin(9600);
 
-    FastLED.addLeds<WS2812B, LED_PIN, RGB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+    FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness(brightness);
 
     int i;
@@ -93,22 +93,10 @@ void toggleDeskLight(char cmd) {
 
 void controlDeskLights(char cmd) {
     if (!isDeskLightOn) return;
-    CRGB color;
-    if (cmd == 'F') {//red
-        color = CRGB(0,255,0);
-        showColors(color);
-    } else if (cmd == 'G') {//GREEN
-        color = CRGB(255,0,0);
-        showColors(color);
-    } if (cmd == 'H') {//BLUE
-        color = CRGB(0,0,255);
-        showColors(color);
-    } if (cmd == 'I') {//YELLOW
-        color = CRGB(255,255,0);
-        showColors(color);
-    } if (cmd == 'J') {//WHITE
-        color = CRGB(255,255,255);
-        showColors(color);
+    if (cmd == 'F') {//read color
+        char obtainedColor[3];
+        ble.readBytes(obtainedColor, 3);
+        showColors(CRGB(byte(obtainedColor[0]),byte(obtainedColor[1]),byte(obtainedColor[2])));
     } if (cmd == 'B') { // up brightness
         brightness += 10;
         if (brightness > 100) brightness = 100;
@@ -131,7 +119,7 @@ void controlDeskLights(char cmd) {
         if (colorTempPosition < 0) colorTempPosition = 0;
         FastLED.setTemperature(colorTemps[colorTempPosition]);
         FastLED.show();
-    }
+    } 
 }
 
 void showColors(CRGB color) {
@@ -150,7 +138,5 @@ void processData2() {
         toggleDeskLight(data);
       }
 }
-
-
 
 
