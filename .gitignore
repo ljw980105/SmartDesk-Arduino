@@ -36,3 +36,6 @@
 .idea/
 cmake-build-debug/
 cmake/
+
+# faseLED
+FastLED/

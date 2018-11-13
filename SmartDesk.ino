@@ -1,7 +1,9 @@
 #include <FastLED.h>
 #include <SoftwareSerial.h>
+#include "OutgoingCommand.h"
+#include "IncomingCommands.h"
 
-#define NUM_LEDS 60
+#define NUM_LEDS 32
 #define LED_PIN 5
 
 #define txPin 11
@@ -13,7 +15,7 @@ uint8_t brightness = 50;
 int redValue;
 int greenValue;
 int blueValue;
-int isDeskLightOn = 0;
+int isWhiteboardLightOn = 0;
 
 CRGB colorTemps[9] = {CRGB(255,147,41), CRGB(255,197,143), CRGB(255,214,170), CRGB(255,241,224), CRGB(255,250,244),
                        CRGB(255,255,251), CRGB(255,255,255), CRGB(201,226,255), CRGB(64,156,255) };
@@ -78,43 +80,43 @@ void handleLighting() {
 }
 
 void toggleDeskLight(char cmd) {
-    if (cmd == 'A') {
-        isDeskLightOn = !isDeskLightOn;
-        if (isDeskLightOn == 0) {
-            ble.print("D-OF");
+    if (cmd == 'G') {
+        isWhiteboardLightOn = !isWhiteboardLightOn;
+        if (isWhiteboardLightOn == 0) {
+            ble.print(outgoing_whiteboardLigihtOff);
             FastLED.clear();
             FastLED.show();
-        } else if (isDeskLightOn == 1) {
-            ble.print("D-ON");
+        } else if (isWhiteboardLightOn == 1) {
+            ble.print(outgoing_whiteboardLigihtOn);
             showColors(CRGB::White);
         }
     }
 }
 
-void controlDeskLights(char cmd) {
-    if (!isDeskLightOn) return;
-    if (cmd == 'F') {//read color
+void controlWhiteboardLight(char cmd) {
+    if (!isWhiteboardLightOn) return;
+    if (cmd == incoming_whiteboardLightColor) {//read color
         char obtainedColor[3];
         ble.readBytes(obtainedColor, 3);
         showColors(CRGB(byte(obtainedColor[0]),byte(obtainedColor[1]),byte(obtainedColor[2])));
-    } if (cmd == 'B') { // up brightness
+    } if (cmd == incoming_whiteboardLightUpBrightness) { // up brightness
         brightness += 10;
         if (brightness > 100) brightness = 100;
         FastLED.setBrightness(brightness);
         FastLED.show();
         Serial.print("Upping brightness");
-    } if (cmd == 'C') { // down brightness
+    } if (cmd == incoming_whiteboardLightReduceBrightness) { // down brightness
         brightness -= 10;
         if (brightness < 0) brightness = 0;
         FastLED.setBrightness(brightness);
         FastLED.show();
         Serial.print("Reducing brightness");
-    } if (cmd == 'D') { // up color temp
+    } if (cmd == incoming_whiteboardLightUpColorTemp) { // up color temp
         colorTempPosition += 1;
         if (colorTempPosition > 8) colorTempPosition = 8;
         FastLED.setTemperature(colorTemps[colorTempPosition]);
         FastLED.show();
-    } if (cmd == 'E') { // down color temp
+    } if (cmd == incoming_whiteboardLightReduceColorTemp) { // down color temp
         colorTempPosition -= 1;
         if (colorTempPosition < 0) colorTempPosition = 0;
         FastLED.setTemperature(colorTemps[colorTempPosition]);
@@ -134,7 +136,8 @@ void showColors(CRGB color) {
 void processData2() {
       if (ble.available()) {
         char data = ble.read();
-        controlDeskLights(data);
+        Serial.print(data);
+          controlWhiteboardLight(data);
         toggleDeskLight(data);
       }
 }
