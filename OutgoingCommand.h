@@ -6,8 +6,8 @@
 #define SMARTDESK_OUTGOINGCOMMAND_H
 
 // desk light
-#define outgoing_deskLightOn = "D-ON"
-#define outgoing_deskLightOff = "D-OF"
+#define outgoing_deskLightOn "D-ON"
+#define outgoing_deskLightOff "D-OF"
 
 // whiteboard lights
 #define outgoing_whiteboardLigihtOn "W-ON"
