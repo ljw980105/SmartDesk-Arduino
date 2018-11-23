@@ -26,6 +26,7 @@
 #define incoming_whiteboardUp 'M'
 #define incoming_whiteboardDown 'N'
 #define incoming_whiteboardEraseToggle 'O'
+#define incoming_whiteboardStop 'R'
 
 // lockable compartment
 #define incoming_lockableToggle 'P'

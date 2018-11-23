@@ -2,31 +2,56 @@
 #include <SoftwareSerial.h>
 #include "OutgoingCommand.h"
 #include "IncomingCommands.h"
+#include "MotorController.h"
 
-#define WB_NUM_LEDS 32
+// whiteboard light
 #define WB_LIGHT_PIN 5
+#define WB_NUM_LEDS 32
 CRGB wb_leds[WB_NUM_LEDS];
 uint8_t wb_colorTempPosition = 4;
+int isWhiteboardLightOn = 0;
+uint8_t whiteboardLightBrightness = 50;
 
-#define DK_NUM_LEDS 60
+// desk light
 #define DK_LIGHT_PIN 6
+#define DK_NUM_LEDS 60
 CRGB dk_leds[DK_NUM_LEDS];
 uint8_t dk_colorTempPosition = 4;
+int isDeskLightOn = 0;
+uint8_t deskLightBrightness = 50;
 
+// lockable compartment
+#define LOCK_PIN 7
+int isLockableCmptLocked = 0;
+
+/*
+ * whiteboard movement
+ * We will use relay 1 - 4 for the wb movement. So
+ * Pin 22 -> relay 1 -> motor power
+ * Pin 24 -> relay 2 -> motor ground
+ * Pin 26 -> relay 3 -> motor ground
+ * Pin 28 -> relay 4 -> motor power
+ */
+#define wb_forwardPowerPin 22
+#define wb_forwardGroundPin 24
+#define wb_reversePowerPin 26
+#define wb_reverseGroundPin 28
+MotorController whiteboardMovement(wb_forwardPowerPin,wb_reversePowerPin,wb_forwardGroundPin,wb_reverseGroundPin);
+
+// whiteboard toggle
+#define ERASE_TOGGLE_PIN 8
+int isWhiteboardErasing = 0;
+
+// ble
 #define txPin 11
 #define rxPin 10
-
 SoftwareSerial ble(rxPin, txPin);
 int redValue;
 int greenValue;
 int blueValue;
 
-int isWhiteboardLightOn = 0;
-uint8_t whiteboardLightBrightness = 50;
-int isDeskLightOn = 0;
-uint8_t deskLightBrightness = 50;
 
-CRGB colorTemps[9] = {CRGB(255,147,41), CRGB(255,197,143), CRGB(255,214,170), CRGB(255,241,224), CRGB(255,250,244),
+CRGB colorTemps[9] = { CRGB(255,147,41), CRGB(255,197,143), CRGB(255,214,170), CRGB(255,241,224), CRGB(255,250,244),
                        CRGB(255,255,251), CRGB(255,255,255), CRGB(201,226,255), CRGB(64,156,255) };
 
 # pragma mark - function prototypes
@@ -36,12 +61,17 @@ void toggleWhiteboardLight(char cmd);
 void controlWhiteboardLight(char cmd);
 void toggleDeskLight(char cmd);
 void controlDeskLight(char cmd);
+void controlLock(char cmd);
+void controlWhiteboardMovement(char cmd);
+void controlWhiteboardToggle(char cmd);
 
 # pragma mark - main arduino methods
 
 void setup() {
     pinMode(rxPin, INPUT);
     pinMode(txPin, OUTPUT);
+    pinMode(LOCK_PIN, OUTPUT);
+    pinMode(ERASE_TOGGLE_PIN, OUTPUT);
     Serial.begin(9600);
     ble.begin(9600);
 
@@ -61,11 +91,14 @@ void setup() {
 void loop() {
     if (ble.available()) {
         char data = ble.read();
-        Serial.print(data);
+        Serial.println(data);
         toggleWhiteboardLight(data);
         controlWhiteboardLight(data);
         toggleDeskLight(data);
         controlDeskLight(data);
+        controlLock(data);
+        controlWhiteboardMovement(data);
+        controlWhiteboardToggle(data);
     }
 }
 
@@ -202,3 +235,45 @@ void controlDeskLight(char cmd) {
         FastLED.show();
     }
 }
+
+# pragma mark - Lockable compartment methods
+
+void controlLock(char cmd) {
+    if (cmd == incoming_lockableToggle) {
+        if (isLockableCmptLocked) {
+            ble.print(outgoing_lockableCmptLocked);
+        } else {
+            ble.print(outgoing_lockableCmptUnlocked);
+        }
+        digitalWrite(LOCK_PIN, !isLockableCmptLocked);
+        isLockableCmptLocked = !isLockableCmptLocked;
+    }
+}
+
+# pragma mark whiteboard movement methods
+
+void controlWhiteboardMovement(char cmd) {
+    if (cmd == incoming_whiteboardUp) {
+        whiteboardMovement.forward();
+    } else if (cmd == incoming_whiteboardDown) {
+        whiteboardMovement.reverse();
+    } else if (cmd == incoming_whiteboardStop) {
+        whiteboardMovement.stop();
+    }
+}
+
+# pragma mark whiteboard erase toggle
+
+void controlWhiteboardToggle(char cmd) {
+    if (cmd == incoming_whiteboardEraseToggle) {
+        Serial.print("Toggling wb erase");
+        if (isWhiteboardErasing) {
+            ble.print(outgoing_whiteboardEraseOn);
+        } else {
+            ble.print(outgoing_whiteboardEraseOff);
+        }
+        digitalWrite(ERASE_TOGGLE_PIN, !isWhiteboardErasing);
+        isWhiteboardErasing = !isWhiteboardErasing;
+    }
+}
+

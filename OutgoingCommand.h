@@ -14,8 +14,8 @@
 #define outgoing_whiteboardLigihtOff "W-OF"
 
 // whiteboard erase
-#define outgoing_whiteboardEraseOn "W-EO";
-#define outgoing_whiteboardEraseOff "W-OF"
+#define outgoing_whiteboardEraseOn "W-EO"
+#define outgoing_whiteboardEraseOff "W-EF"
 
 // lockable compartment
 #define outgoing_lockableCmptLocked "L-LO"
