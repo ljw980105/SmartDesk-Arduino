@@ -50,7 +50,6 @@ int redValue;
 int greenValue;
 int blueValue;
 
-
 CRGB colorTemps[9] = { CRGB(255,147,41), CRGB(255,197,143), CRGB(255,214,170), CRGB(255,241,224), CRGB(255,250,244),
                        CRGB(255,255,251), CRGB(255,255,255), CRGB(201,226,255), CRGB(64,156,255) };
 
@@ -81,8 +80,15 @@ void setup() {
     FastLED.setBrightness(deskLightBrightness);
 
     int i;
-    for (i = 0; i< WB_NUM_LEDS; i++ ){
+    for (i = 0; i< WB_NUM_LEDS; i++) {
         wb_leds[i] = CRGB(255,255,255);
+        FastLED.show();
+        delay(5);
+    }
+
+    int j;
+    for (j = 0; j < DK_NUM_LEDS; j++) {
+        dk_leds[j] = CRGB(255,255,255);
         FastLED.show();
         delay(5);
     }
@@ -131,9 +137,9 @@ void handleLighting() {
   }
 }
 
-void showColors(int numPins, CRGB type[],CRGB color) {
+void showColors(int numLEDs, CRGB type[],CRGB color) {
     int i;
-    for (i = 0; i< WB_NUM_LEDS; i++ ){
+    for (i = 0; i< numLEDs; i++ ){
         type[i] = color;
         FastLED.show();
         delay(5);
@@ -147,8 +153,7 @@ void toggleWhiteboardLight(char cmd) {
         isWhiteboardLightOn = !isWhiteboardLightOn;
         if (isWhiteboardLightOn == 0) {
             ble.print(outgoing_whiteboardLigihtOff);
-            FastLED.clear();
-            FastLED.show();
+            showColors(WB_NUM_LEDS, wb_leds, CRGB::Black);
         } else if (isWhiteboardLightOn == 1) {
             ble.print(outgoing_whiteboardLigihtOn);
             showColors(WB_NUM_LEDS, wb_leds, CRGB::White);
@@ -195,8 +200,7 @@ void toggleDeskLight(char cmd) {
         isDeskLightOn = !isDeskLightOn;
         if (isDeskLightOn == 0) {
             ble.print(outgoing_deskLightOff);
-            FastLED.clear();
-            FastLED.show();
+            showColors(DK_NUM_LEDS, dk_leds, CRGB::Black);
         } else if (isDeskLightOn == 1) {
             ble.print(outgoing_deskLightOn);
             showColors(DK_NUM_LEDS, dk_leds, CRGB::White);
